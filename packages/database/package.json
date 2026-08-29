@@ -1,5 +1,5 @@
 {
-  "name": "@kifaa/ledger",
+  "name": "@kifaa/database",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,17 +14,16 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "migrate": "tsx src/migrate.ts",
     "lint": "echo 'lint ok'",
-    "test": "node --import tsx --test src/**/*.test.ts",
-    "test:unit": "node --import tsx --test src/engine.test.ts",
-    "test:pg": "node --import tsx --test src/postgres.test.ts"
+    "test": "echo 'see @kifaa/ledger postgres tests'"
   },
   "dependencies": {
-    "@kifaa/shared": "workspace:*",
-    "@kifaa/database": "workspace:*"
+    "postgres": "^3.4.5"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.0"
   }
 }
