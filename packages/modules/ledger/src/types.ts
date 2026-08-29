@@ -4,7 +4,7 @@ export interface LedgerLineInput {
   accountId: string;
   direction: EntryDirection;
   amountMinor: bigint;
-  /** Required for multi-currency journals; defaults to KES when omitted */
+  /** Required for multi-currency journals; defaults to KES when omitted for single-currency posts */
   currency?: CurrencyCode;
 }
 
@@ -15,7 +15,7 @@ export interface JournalInput {
   lines: LedgerLineInput[];
   createdBy?: string;
   metadata?: Record<string, unknown>;
-  /** Explicit link when this journal reverses another */
+  /** Explicit link when this journal reverses another (preferred over metadata) */
   reversesJournalId?: string;
 }
 
@@ -27,7 +27,9 @@ export interface PostedJournal {
   status: "posted" | "reversed";
   postedAt: Date;
   lines: Array<LedgerLineInput & { id: string; currency: CurrencyCode }>;
+  /** Journal this one reverses, if any */
   reversesJournalId?: string;
+  /** Journal that reversed this one, if any */
   reversedByJournalId?: string;
 }
 
@@ -37,16 +39,21 @@ export interface AccountBalance {
   currency: CurrencyCode;
 }
 
-/** Minimal account registry entry — connects id to LedgerAccountType */
+/**
+ * Minimal account registry entry.
+ * currency is required: under strictAccounts, postings must match registered currency.
+ */
 export interface LedgerAccount {
   id: string;
   type: LedgerAccountType;
-  currency?: CurrencyCode;
+  currency: CurrencyCode;
   label?: string;
 }
 
 /**
- * Ledger persistence contract — async-compatible for future PostgreSQL.
+ * Ledger persistence contract.
+ * Methods are async-compatible so PostgreSQL (and other) stores can implement
+ * the same surface without changing callers later.
  */
 export interface LedgerStore {
   postJournal(input: JournalInput): PostedJournal | Promise<PostedJournal>;

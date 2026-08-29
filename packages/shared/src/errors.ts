@@ -28,6 +28,13 @@ export class ImmutableLedgerError extends KifaaError {
   }
 }
 
+/** Account registry / posting identity violations (existence, type, currency). */
+export class LedgerAccountError extends KifaaError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, "LEDGER_ACCOUNT_ERROR", 400, details);
+  }
+}
+
 export class TransactionStateError extends KifaaError {
   constructor(message: string) {
     super(message, "INVALID_TRANSACTION_STATE", 409);
