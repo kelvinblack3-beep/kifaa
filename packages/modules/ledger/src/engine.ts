@@ -1,5 +1,6 @@
 import {
   ImmutableLedgerError,
+  LedgerAccountError,
   UnbalancedJournalError,
   newId,
   type CurrencyCode,
@@ -13,6 +14,12 @@ import type {
   LedgerStore,
   PostedJournal,
 } from "./types.js";
+
+const VALID_CURRENCIES: ReadonlySet<CurrencyCode> = new Set(["KES", "USD", "EUR", "GBP"]);
+const VALID_ACCOUNT_TYPES: ReadonlySet<LedgerAccountType> = new Set([
+  "asset", "liability", "equity", "revenue", "expense",
+  "customer", "merchant", "provider_clearing", "fee", "suspense",
+]);
 
 function balanceKey(accountId: string, currency: CurrencyCode): string {
   return `${accountId}\0${currency}`;
@@ -43,18 +50,30 @@ function assertBalanced(lines: LedgerLineInput[]): void {
   }
 }
 
+function assertValidAccountDefinition(account: LedgerAccount): void {
+  if (!account.id || typeof account.id !== "string" || account.id.trim() === "") {
+    throw new LedgerAccountError("Account id must be a non-empty string");
+  }
+  if (!VALID_ACCOUNT_TYPES.has(account.type)) {
+    throw new LedgerAccountError(`Invalid LedgerAccountType: ${String(account.type)}`, { type: account.type });
+  }
+  if (!VALID_CURRENCIES.has(account.currency)) {
+    throw new LedgerAccountError(`Invalid CurrencyCode: ${String(account.currency)}`, { currency: account.currency });
+  }
+}
+
 export interface InMemoryLedgerOptions {
   /**
-   * When true, postJournal rejects lines whose accountId is not in the registry.
-   * Core enables this so every money-moving account is explicitly registered.
-   * Default false preserves pure ledger unit tests that post without registry setup.
+   * When true, postJournal requires registered accounts and currency match.
+   * Default false preserves pure ledger unit tests without registry setup.
    */
   strictAccounts?: boolean;
 }
 
 /**
  * In-memory double-entry ledger — reference implementation.
- * Projections are not the source of truth; rebuildBalances() reconstructs from journals.
+ * Normal-balance / direction-vs-type rules are intentionally NOT enforced:
+ * customer liability accounts are credited on funding and debited on spend.
  */
 export class InMemoryLedger implements LedgerStore {
   private journals = new Map<string, PostedJournal>();
@@ -68,7 +87,31 @@ export class InMemoryLedger implements LedgerStore {
   }
 
   registerAccount(account: LedgerAccount): void {
-    this.accounts.set(account.id, account);
+    assertValidAccountDefinition(account);
+    const existing = this.accounts.get(account.id);
+    if (existing) {
+      if (existing.type === account.type && existing.currency === account.currency) {
+        if (account.label !== undefined && existing.label !== account.label) {
+          existing.label = account.label;
+        }
+        return;
+      }
+      throw new LedgerAccountError(
+        `Account ${account.id} already registered; immutable fields cannot change`,
+        {
+          existingType: existing.type,
+          existingCurrency: existing.currency,
+          attemptedType: account.type,
+          attemptedCurrency: account.currency,
+        }
+      );
+    }
+    this.accounts.set(account.id, {
+      id: account.id.trim(),
+      type: account.type,
+      currency: account.currency,
+      label: account.label,
+    });
   }
 
   getAccount(accountId: string): LedgerAccount | undefined {
@@ -90,8 +133,22 @@ export class InMemoryLedger implements LedgerStore {
 
     if (this.strictAccounts) {
       for (const line of input.lines) {
-        if (!this.accounts.has(line.accountId)) {
-          throw new ImmutableLedgerError(`Unregistered ledger account: ${line.accountId}`);
+        const registered = this.accounts.get(line.accountId);
+        if (!registered) {
+          throw new LedgerAccountError(`Unregistered ledger account: ${line.accountId}`, {
+            accountId: line.accountId,
+          });
+        }
+        const lineCurrency = (line.currency ?? "KES") as CurrencyCode;
+        if (registered.currency !== lineCurrency) {
+          throw new LedgerAccountError(
+            `Currency mismatch for account ${line.accountId}: registered ${registered.currency}, line ${lineCurrency}`,
+            {
+              accountId: line.accountId,
+              registeredCurrency: registered.currency,
+              lineCurrency,
+            }
+          );
         }
       }
     }
