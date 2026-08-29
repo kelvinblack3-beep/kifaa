@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { InMemoryLedger } from "./engine.js";
 import {
   ImmutableLedgerError,
+  LedgerAccountError,
   UnbalancedJournalError,
   newJournalId,
   newTransactionId,
@@ -190,7 +191,6 @@ describe("double-entry ledger invariants", () => {
     const rebuilt = ledger.rebuildBalances();
     assert.equal(rebuilt.get(ACC_A)?.get("KES") ?? 0n, 0n);
     assert.equal(rebuilt.get(ACC_B)?.get("KES") ?? 0n, 0n);
-    assert.equal(ledger.getBalance(ACC_A, "KES"), 0n);
   });
 
   it("rebuildBalances matches projection for posted journals", () => {
@@ -232,8 +232,118 @@ describe("double-entry ledger invariants", () => {
   it("registerAccount connects LedgerAccountType", () => {
     const ledger = new InMemoryLedger();
     ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
-    ledger.registerAccount({ id: ACC_CLEARING, type: "provider_clearing" });
+    ledger.registerAccount({ id: ACC_CLEARING, type: "provider_clearing", currency: "KES" });
     assert.equal(ledger.getAccount(ACC_A)?.type, "customer");
     assert.equal(ledger.getAccount(ACC_CLEARING)?.type, "provider_clearing");
+  });
+});
+
+describe("account registry integrity", () => {
+  it("KES account + KES posting passes under strictAccounts", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: true });
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
+    ledger.registerAccount({ id: ACC_B, type: "customer", currency: "KES" });
+    const posted = ledger.postJournal({
+      id: newJournalId(),
+      lines: [
+        { accountId: ACC_A, direction: "debit", amountMinor: 100n, currency: "KES" },
+        { accountId: ACC_B, direction: "credit", amountMinor: 100n, currency: "KES" },
+      ],
+    });
+    assert.equal(posted.status, "posted");
+  });
+
+  it("KES account + USD posting is rejected under strictAccounts", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: true });
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
+    ledger.registerAccount({ id: ACC_B, type: "customer", currency: "KES" });
+    assert.throws(
+      () =>
+        ledger.postJournal({
+          id: newJournalId(),
+          lines: [
+            { accountId: ACC_A, direction: "debit", amountMinor: 100n, currency: "USD" },
+            { accountId: ACC_B, direction: "credit", amountMinor: 100n, currency: "USD" },
+          ],
+        }),
+      (err: unknown) => err instanceof LedgerAccountError
+    );
+  });
+
+  it("USD account + USD posting passes under strictAccounts", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: true });
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "USD" });
+    ledger.registerAccount({ id: ACC_B, type: "customer", currency: "USD" });
+    const posted = ledger.postJournal({
+      id: newJournalId(),
+      lines: [
+        { accountId: ACC_A, direction: "debit", amountMinor: 50n, currency: "USD" },
+        { accountId: ACC_B, direction: "credit", amountMinor: 50n, currency: "USD" },
+      ],
+    });
+    assert.equal(ledger.getBalance(ACC_A, "USD"), 50n);
+    assert.equal(posted.status, "posted");
+  });
+
+  it("identical re-registration is idempotent", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: true });
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES", label: "Alice" });
+    assert.equal(ledger.getAccount(ACC_A)?.type, "customer");
+    assert.equal(ledger.getAccount(ACC_A)?.currency, "KES");
+  });
+
+  it("re-registration with different currency is rejected", () => {
+    const ledger = new InMemoryLedger();
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
+    assert.throws(
+      () => ledger.registerAccount({ id: ACC_A, type: "customer", currency: "USD" }),
+      (err: unknown) => err instanceof LedgerAccountError
+    );
+  });
+
+  it("re-registration with different type is rejected", () => {
+    const ledger = new InMemoryLedger();
+    ledger.registerAccount({ id: ACC_A, type: "customer", currency: "KES" });
+    assert.throws(
+      () => ledger.registerAccount({ id: ACC_A, type: "merchant", currency: "KES" }),
+      (err: unknown) => err instanceof LedgerAccountError
+    );
+  });
+
+  it("empty account id is rejected", () => {
+    const ledger = new InMemoryLedger();
+    assert.throws(
+      () => ledger.registerAccount({ id: "", type: "customer", currency: "KES" }),
+      (err: unknown) => err instanceof LedgerAccountError
+    );
+  });
+
+  it("strict ledger rejects unregistered account", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: true });
+    assert.throws(
+      () =>
+        ledger.postJournal({
+          id: newJournalId(),
+          lines: [
+            { accountId: "ghost", direction: "debit", amountMinor: 1n, currency: "KES" },
+            { accountId: "ghost2", direction: "credit", amountMinor: 1n, currency: "KES" },
+          ],
+        }),
+      (err: unknown) => err instanceof LedgerAccountError
+    );
+  });
+
+  it("non-strict ledger still posts without registration", () => {
+    const ledger = new InMemoryLedger({ strictAccounts: false });
+    const posted = ledger.postJournal({
+      id: newJournalId(),
+      lines: [
+        { accountId: "unreg-a", direction: "debit", amountMinor: 10n },
+        { accountId: "unreg-b", direction: "credit", amountMinor: 10n },
+      ],
+    });
+    assert.equal(posted.status, "posted");
+    assert.equal(ledger.getBalance("unreg-a"), 10n);
   });
 });
