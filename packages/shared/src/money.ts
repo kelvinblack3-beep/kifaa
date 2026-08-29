@@ -56,16 +56,20 @@ export function formatMoney(m: Money, locale = "en-KE"): string {
   }).format(major);
 }
 
-/** Parse display string "1500.00" or "1,500.00" → minor units */
+/**
+ * Parse display string "1500.00" or "1,500.00" or "-0.50" → minor units.
+ * Sign is taken from a leading minus so "-0.50" → -50n (not +50n).
+ */
 export function parseToMinor(input: string): bigint {
   const cleaned = input.replace(/,/g, "").trim();
-  const match = cleaned.match(/^(-?\d+)(?:\.(\d{0,2}))?$/);
+  const match = cleaned.match(/^(-)?(\d+)(?:\.(\d{0,2}))?$/);
   if (!match) throw new Error(`Invalid money string: ${input}`);
-  const whole = BigInt(match[1]);
-  const frac = match[2] ? match[2].padEnd(2, "0") : "00";
+  const negative = match[1] === "-";
+  const whole = BigInt(match[2]);
+  const frac = match[3] ? match[3].padEnd(2, "0") : "00";
   const fracMinor = BigInt(frac.slice(0, 2));
-  const sign = whole < 0n ? -1n : 1n;
-  return sign * (whole * 100n * sign + fracMinor);
+  const abs = whole * 100n + fracMinor;
+  return negative ? -abs : abs;
 }
 
 export function zero(currency: CurrencyCode = "KES"): Money {
