@@ -1,7 +1,9 @@
 /**
  * Provider adapter interfaces — rail-agnostic.
- * Live M-PESA / Airtel / bank adapters plug in later.
- * SANDBOX only for V0.1.
+ *
+ * V0.1 Core does NOT invoke fund/cashIn/cashOut for money movement.
+ * V0.1 uses ledger-only sandbox simulation. SandboxProvider is a reference
+ * implementation / future boundary only. Production adapters come later.
  */
 
 export type ProviderMode = "SANDBOX" | "PRODUCTION";
@@ -50,6 +52,7 @@ export interface PaymentProvider {
 }
 
 export interface MobileMoneyProvider extends FundingProvider, WithdrawalProvider, PaymentProvider {}
+
 export interface BankProvider extends FundingProvider, WithdrawalProvider {}
 
 export interface AgentProvider {
