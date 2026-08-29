@@ -43,11 +43,29 @@ function assertBalanced(lines: LedgerLineInput[]): void {
   }
 }
 
+export interface InMemoryLedgerOptions {
+  /**
+   * When true, postJournal rejects lines whose accountId is not in the registry.
+   * Core enables this so every money-moving account is explicitly registered.
+   * Default false preserves pure ledger unit tests that post without registry setup.
+   */
+  strictAccounts?: boolean;
+}
+
+/**
+ * In-memory double-entry ledger — reference implementation.
+ * Projections are not the source of truth; rebuildBalances() reconstructs from journals.
+ */
 export class InMemoryLedger implements LedgerStore {
   private journals = new Map<string, PostedJournal>();
   private balances = new Map<string, bigint>();
   private postedTransactionIds = new Set<string>();
   private accounts = new Map<string, LedgerAccount>();
+  readonly strictAccounts: boolean;
+
+  constructor(opts: InMemoryLedgerOptions = {}) {
+    this.strictAccounts = opts.strictAccounts ?? false;
+  }
 
   registerAccount(account: LedgerAccount): void {
     this.accounts.set(account.id, account);
@@ -57,7 +75,11 @@ export class InMemoryLedger implements LedgerStore {
     return this.accounts.get(accountId);
   }
 
-  ensureAccount(accountId: string, type: LedgerAccountType = "customer", currency: CurrencyCode = "KES"): void {
+  ensureAccount(
+    accountId: string,
+    type: LedgerAccountType = "customer",
+    currency: CurrencyCode = "KES"
+  ): void {
     if (!this.accounts.has(accountId)) {
       this.registerAccount({ id: accountId, type, currency });
     }
@@ -65,32 +87,62 @@ export class InMemoryLedger implements LedgerStore {
 
   postJournal(input: JournalInput): PostedJournal {
     assertBalanced(input.lines);
-    if (this.journals.has(input.id)) throw new ImmutableLedgerError(`Journal ${input.id} already exists`);
-    if (input.transactionId && this.postedTransactionIds.has(input.transactionId)) {
-      throw new ImmutableLedgerError(`Transaction ${input.transactionId} already has a posted journal (duplicate prevention)`);
+
+    if (this.strictAccounts) {
+      for (const line of input.lines) {
+        if (!this.accounts.has(line.accountId)) {
+          throw new ImmutableLedgerError(`Unregistered ledger account: ${line.accountId}`);
+        }
+      }
     }
+
+    if (this.journals.has(input.id)) {
+      throw new ImmutableLedgerError(`Journal ${input.id} already exists`);
+    }
+
+    if (input.transactionId && this.postedTransactionIds.has(input.transactionId)) {
+      throw new ImmutableLedgerError(
+        `Transaction ${input.transactionId} already has a posted journal (duplicate prevention)`
+      );
+    }
+
     if (input.reversesJournalId) {
       const target = this.journals.get(input.reversesJournalId);
-      if (!target) throw new ImmutableLedgerError(`Cannot reverse unknown journal ${input.reversesJournalId}`);
-      if (target.status === "reversed") throw new ImmutableLedgerError(`Journal ${input.reversesJournalId} is already reversed`);
+      if (!target) {
+        throw new ImmutableLedgerError(`Cannot reverse unknown journal ${input.reversesJournalId}`);
+      }
+      if (target.status === "reversed") {
+        throw new ImmutableLedgerError(`Journal ${input.reversesJournalId} is already reversed`);
+      }
     }
+
     const posted: PostedJournal = {
       id: input.id,
       transactionId: input.transactionId,
       description: input.description,
       status: "posted",
       postedAt: new Date(),
-      lines: input.lines.map((l) => ({ ...l, id: newId(), currency: (l.currency ?? "KES") as CurrencyCode })),
+      lines: input.lines.map((l) => ({
+        ...l,
+        id: newId(),
+        currency: (l.currency ?? "KES") as CurrencyCode,
+      })),
       reversesJournalId: input.reversesJournalId,
     };
+
     this.journals.set(posted.id, posted);
     this.applyLinesToProjection(posted.lines);
-    if (input.transactionId) this.postedTransactionIds.add(input.transactionId);
+
+    if (input.transactionId) {
+      this.postedTransactionIds.add(input.transactionId);
+    }
+
     if (input.reversesJournalId) {
       const original = this.journals.get(input.reversesJournalId)!;
       original.status = "reversed";
       original.reversedByJournalId = posted.id;
     }
+
     return posted;
   }
 
@@ -109,15 +161,18 @@ export class InMemoryLedger implements LedgerStore {
     if (!original) throw new Error(`Journal ${journalId} not found`);
     if (original.status === "reversed") {
       throw new ImmutableLedgerError(
-        `Journal ${journalId} already reversed` + (original.reversedByJournalId ? ` by ${original.reversedByJournalId}` : "")
+        `Journal ${journalId} already reversed` +
+          (original.reversedByJournalId ? ` by ${original.reversedByJournalId}` : "")
       );
     }
+
     const reversingLines: LedgerLineInput[] = original.lines.map((l) => ({
       accountId: l.accountId,
       direction: l.direction === "debit" ? "credit" : "debit",
       amountMinor: l.amountMinor,
       currency: l.currency,
     }));
+
     return this.postJournal({
       id: newJournalId,
       description: reason ?? `Reversal of ${journalId}`,
@@ -139,7 +194,10 @@ export class InMemoryLedger implements LedgerStore {
       for (const line of journal.lines) {
         const currency = line.currency;
         let byCur = rebuilt.get(line.accountId);
-        if (!byCur) { byCur = new Map(); rebuilt.set(line.accountId, byCur); }
+        if (!byCur) {
+          byCur = new Map();
+          rebuilt.set(line.accountId, byCur);
+        }
         const current = byCur.get(currency) ?? 0n;
         const delta = line.direction === "debit" ? line.amountMinor : -line.amountMinor;
         byCur.set(currency, current + delta);
@@ -149,7 +207,9 @@ export class InMemoryLedger implements LedgerStore {
       for (const [currency, bal] of byCur) {
         const projected = this.getBalance(accountId, currency);
         if (projected !== bal) {
-          throw new Error(`Balance mismatch for ${accountId} ${currency}: projection=${projected} rebuilt=${bal}`);
+          throw new Error(
+            `Balance mismatch for ${accountId} ${currency}: projection=${projected} rebuilt=${bal}`
+          );
         }
       }
     }
@@ -157,7 +217,9 @@ export class InMemoryLedger implements LedgerStore {
       const { accountId, currency } = parseBalanceKey(key);
       const rebuiltBal = rebuilt.get(accountId)?.get(currency) ?? 0n;
       if (projected !== 0n && projected !== rebuiltBal) {
-        throw new Error(`Balance mismatch for ${accountId} ${currency}: projection=${projected} rebuilt=${rebuiltBal}`);
+        throw new Error(
+          `Balance mismatch for ${accountId} ${currency}: projection=${projected} rebuilt=${rebuiltBal}`
+        );
       }
     }
     return rebuilt;
