@@ -44,8 +44,15 @@ const FLOAT_ACCOUNT = "sys_sandbox_float";
 const SYSTEM_SUSPENSE = "sys_suspense";
 
 export interface KifaaPlatformOptions {
-  /** Inject ledger (tests). Default: strict-account in-memory ledger. */
+  /**
+   * Inject ledger (tests only).
+   * Default path always uses strictAccounts: true.
+   * Injected ledgers must have strictAccounts === true unless
+   * allowNonStrictLedger is explicitly set (test-only escape hatch).
+   */
   ledger?: InMemoryLedger;
+  /** Test-only: permit injecting a non-strict ledger. */
+  allowNonStrictLedger?: boolean;
 }
 
 function hashBody(body: unknown): string {
@@ -95,9 +102,16 @@ export class KifaaPlatform {
     [];
 
   constructor(opts: KifaaPlatformOptions = {}) {
-    this.ledger =
-      opts.ledger ??
-      new InMemoryLedger({ strictAccounts: true });
+    if (opts.ledger) {
+      if (!opts.ledger.strictAccounts && !opts.allowNonStrictLedger) {
+        throw new ValidationError(
+          "Injected ledger must use strictAccounts: true (or set allowNonStrictLedger for tests)"
+        );
+      }
+      this.ledger = opts.ledger;
+    } else {
+      this.ledger = new InMemoryLedger({ strictAccounts: true });
+    }
 
     this.ledger.registerAccount({
       id: FLOAT_ACCOUNT,
@@ -418,7 +432,6 @@ export class KifaaPlatform {
     });
 
     this.setStatus(txn, "PROCESSING");
-    // V0.1: ledger-only sandbox — does not call SandboxProvider.cashIn().
     return this.completeWithJournal(txn, () =>
       this.post({
         description: `Agent cash-in ${txn.reference}`,
@@ -640,14 +653,6 @@ export class KifaaPlatform {
     if (amount <= 0n) throw new ValidationError("Amount must be positive");
   }
 
-  /**
-   * Idempotency:
-   * - same key + different body → conflict (even if prior attempt FAILED)
-   * - same key + same body + COMPLETED/PENDING/PROCESSING/REVERSED → return existing
-   * - same key + same body + FAILED without journalId → allow retry (return null)
-   * - same key + same body + FAILED with journalId → ambiguous; return existing (no auto-retry)
-   * Failed attempts remain in txns for audit; byIdempotency is rebound on the next beginTxn.
-   */
   private idempotentLookup(key: string, body: unknown): CoreTransaction | null {
     const existingId = this.byIdempotency.get(key);
     if (!existingId) return null;
