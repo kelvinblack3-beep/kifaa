@@ -1,49 +1,55 @@
 # KIFAA-SC — HARDWARE_BASELINE
 
-Purpose: record current hardware baselines, measured results, and the provenance of each claim (measured vs estimate).
+Purpose: record current hardware baselines, measured results, and the provenance of each claim (measured vs estimate). Use explicit provenance tags: LOCKED, PROPOSED, VERIFIED, ESTIMATE, UNVERIFIED, SUPERSEDED.
 
-Known baseline (2026-08-31):
+Known baseline (2026-08-31)
 
+LOCKED
+- Product isolation (KIFAA-SC directory & memory separation from the payment KIFAA project)
+  - status: LOCKED
+  - provenance: repository decision DEC-001
+
+PROPOSED
 - Compute: RK3576-class System-on-Module (preferred prototype/production direction)
   - status: PROPOSED
-  - provenance: project baseline
-
 - RAM: 8 GB target
   - status: PROPOSED
-  - provenance: project baseline
-  - note: A prior adversarial/historical analysis assumed 4 GB; that analysis is preserved only as historical input and is not used as baseline.
-
+  - provenance: project baseline (DO NOT revert to prior 4 GB assumption; that assumption is SUPERSEDED)
 - Storage: 128 GB eMMC + optional microSD
   - status: PROPOSED
-  - provenance: project baseline
-
 - Display: 5.5-inch high-brightness IPS preferred
   - status: PROPOSED
-  - provenance: project baseline
-
-- Camera: modular 5–8 MP MIPI CSI target
+- Modular rear architecture (battery modules, camera module, attachment zones)
   - status: PROPOSED
-  - provenance: project baseline
+- Solar integration: tiled small-cell solar concept across rear enclosure (conceptual)
+  - status: PROPOSED
+- Modular battery: removable external battery/power module (magnetic/mechanical UX concept)
+  - status: PROPOSED
+- Modular camera: rear-mounted detachable camera/scanner
+  - status: PROPOSED
+- Connectivity: optional LTE; offline-first baseline
+  - status: PROPOSED
 
-- Battery: target 25–35 Wh (estimate)
+ESTIMATE / UNVERIFIED
+- Battery: previous estimate 25–35 Wh — treat as ESTIMATE, not LOCKED
   - status: ESTIMATE
-  - provenance: project baseline — requires validation via battery-life testing
+- Thermal performance under sustained local AI workloads — UNVERIFIED
+  - status: UNVERIFIED
+- Ollama runtime performance on RK3576-class SOM — UNVERIFIED
+  - status: UNVERIFIED
+- Magnetic battery electrical architecture and stacking safety — UNVERIFIED
+  - status: UNVERIFIED
+- Final camera module, lens, and OCR performance — UNVERIFIED
+  - status: UNVERIFIED
+- Final enclosure dimensions (195 × 98 × 26 mm is a target) — UNVERIFIED
+  - status: UNVERIFIED
 
-- Thermal: passive thermal design preferred
-  - status: PROPOSED
+OPEN items requiring measurement or design work
+- Hardware security architecture (secure boot, secure update)
+- Exam mode security threat modeling
+- Mechanical retention and drop resistance for rear modules
 
-- Low-power calculator MCU: dedicated MCU preferred for deterministic calculator functions
-  - status: PROPOSED
+Notes
+- Do not convert ESTIMATES or UNVERIFIED items to VERIFIED without experimental evidence or authoritative supplier/manufacturer documentation. Record all test artifacts and measurements in KIFAA-SC/RESEARCH_LOG.md and reference them here when available.
 
-- Connectivity: LTE optional; offline-first baseline
-  - status: PROPOSED
-
-- Security: hardware security and secure update architecture require further verification
-  - status: OPEN
-
-- Exam mode security: requires substantial further investigation before any claim of security
-  - status: OPEN
-
----
-
-Record measured values and test results here. Label each claim with provenance: VERIFIED (measured), ESTIMATE, ASSUMPTION, or UNVERIFIED.
+Last updated: 2026-08-31 (author: memory gate)

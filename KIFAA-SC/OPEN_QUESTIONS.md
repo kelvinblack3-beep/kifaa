@@ -1,15 +1,25 @@
 # KIFAA-SC — OPEN_QUESTIONS
 
-Open questions and research items to prioritize:
+Open questions and research items to prioritize. All entries here are status: OPEN until resolved via experiment, supplier data, or authoritative analysis.
 
-1. Ollama compatibility and performance on RK3576-class SOM (memory, CPU, quantization) — experiment required.
-2. Exam mode threat model and mitigations — can exam mode be made secure enough for high-stakes testing?
-3. Secure update architecture for RK3576-class device (signed updates, rollback protections).
-4. Battery life validation for 25–35 Wh target under typical usage patterns.
-5. Camera module tradeoffs (lens, MIPI CSI integration, autofocus, power cost, OCR quality for exam sheets).
-6. Thermal behavior and sustained performance for local AI workloads.
-7. Exact hardware part selection and supplier availability/cost for production.
-8. Mechanisms for bundling curriculum content and offline updates.
-9. UX tradeoffs for physical keypad + touchscreen (if any hybrid input considered).
+- What exact commercial small solar cells (dimensions, voltage/current, wattage) can physically fit into the rear enclosure and how many can be tiled?
+- What electrical topology (series/parallel mixing, MPPT or simple controller, bypass diodes) gives the best solar harvesting for the tiled layout on a small-area rear surface?
+- Can magnetic attachment coexist safely with high-current battery transfer? What isolation and design patterns are required to make this safe?
+- What connector should be used for removable battery modules (mechanical durability, current rating, hot-plug safety, keyed alignment)?
+- Can battery modules be safely stacked (electrical/thermal/mechanical implications)? If stacking is allowed, what protections and sequencing are required?
+- Should the device include an internal battery plus external reserve battery modules, or should it be external-only for energy extension?
+- What magnetic/mechanical attachment force and retention mechanisms are required to keep modules secure under drop and use conditions?
+- How should the camera module communicate with the main SoC? Is exposing MIPI CSI through a detachable connector feasible and safe, or is USB a better pragmatic tradeoff?
+- Can MIPI CSI be exposed safely through a detachable module without risking signal integrity or connector fragility? What mechanical routing/connector solutions exist?
+- What is the maximum practical rear solar area given enclosure constraints, camera placement, and module zones?
+- How does the tiled-solar architecture affect LTE and other RF antenna performance? Where should antennas be located relative to modules and cells?
+- What happens thermally when the rear is covered by a battery module (heat trapping)? How does that affect SoC throttling and user comfort?
+- Can the enclosure remain serviceable (access to screws, modular replacement) and drop-resistant while supporting modular rear attachments and tiled solar cells?
+- What is the safest architecture for battery hot-plugging (fuse, pre-charge resistor, hot-swap controller, power-path management)?
+- What are the supplier availability, cost, and MOQ for candidate RK3576 SOMs and camera modules suitable for prototypes and small runs?
+- What are the preferred test/dev kits for RK3576 we should acquire for P0.3 validation?
+- What is the best instrumentation method to measure per-module power draw, temperature, and RF impact during integration tests?
 
 Status: OPEN
+
+(Each question should be tracked in RESEARCH_LOG.md with a plan and acceptance criteria. When experiments or supplier data resolve a question, mark the question as CLOSED or SUPERSEDED and record the provenance.)
