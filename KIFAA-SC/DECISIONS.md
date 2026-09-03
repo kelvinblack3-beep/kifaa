@@ -41,3 +41,115 @@
   - author: memory gate
   - date: 2026-09-03
   - references: KIFAA-SC/PROJECT_MEMORY.md, KIFAA-SC/RESEARCH_LOG.md
+
+- DEC-006: SHARP BOYZ as Kenyan Education Intelligence Platform
+  - title: SHARP BOYZ as Kenyan Education Intelligence Platform
+  - description: Define SHARP BOYZ as a Kenyan Education Intelligence Platform rather than a narrow KCSE past-paper, prediction, notes, or chatbot application.
+  - decision:
+    - SHARP BOYZ combines Exam Mastery and Knowledge Mastery.
+    - Exam Mastery includes diagnostics, past questions, performance analysis, probabilistic prediction, revision prioritisation, and exam technique.
+    - Knowledge Mastery includes concepts, real-life applications, Kenyan examples, careers, projects, critical thinking, problem solving, and cross-subject connections.
+    - Core product objective: help a student understand what they are learning, why it matters, where it is used in real life, how well they understand it, and what they should learn next.
+    - The platform is not limited to past papers, prediction, notes libraries, or a generic AI chatbot.
+  - rationale: A platform framing prevents reduction of the product to a single feature and anchors product decisions around student understanding and next-step guidance.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-007: Legacy KCSE and Current CBE/Senior School Context Separation
+  - title: Legacy KCSE and Current CBE/Senior School Context Separation
+  - description: Require explicit separation of educational contexts so historical and current curriculum data are not mixed blindly.
+  - decision:
+    - Architecture must distinguish at minimum:
+      * legacy Form 1–4 / KCSE context
+      * current Competency-Based Education / Senior School / Grade 10–12 context
+    - Historical KCSE material must retain its educational context and provenance.
+    - Current curriculum material must be versioned and context-aware.
+    - Datasets, question banks, and retrieval paths must not treat legacy and current contexts as interchangeable without explicit mapping.
+  - rationale: Kenya’s education system is transitioning; mixing legacy KCSE and current CBE/Senior School data without context would produce incorrect guidance and corrupt evidence models.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-008: Grounded and Versioned Educational Retrieval
+  - title: Grounded and Versioned Educational Retrieval
+  - description: Treat educational content as versioned, grounded source material rather than as undifferentiated training fuel for generative models.
+  - decision:
+    - Curriculum and educational source material should carry source provenance, version/context, and retrieval/grounding metadata where applicable.
+    - Authoritative source material must remain distinct from generated explanation.
+    - SHARP BOYZ must not rely on an uncontrolled concept of “training an AI on curriculum PDFs.”
+    - Generated explanations may paraphrase or teach, but must not silently replace authoritative curriculum facts.
+  - rationale: Grounding and versioning protect students from fabricated curriculum claims and support auditability of educational guidance.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-009: Real-Life Application as Core Product Capability
+  - title: Real-Life Application as Core Product Capability
+  - description: Establish real-life application as a core SHARP BOYZ capability, not a decorative feature.
+  - decision:
+    - The platform should connect concept → real problem → Kenyan example → career relevance → practical challenge.
+    - Real-life application supports Knowledge Mastery and answers “Why does this matter?”
+    - Kenyan examples and practical relevance are first-class product concerns, not optional extras.
+  - rationale: Students need to see relevance beyond examinations; real-life linkage strengthens understanding and motivation without replacing rigorous assessment.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-010: KCSE Prediction Is Probabilistic Revision Guidance
+  - title: KCSE Prediction Is Probabilistic Revision Guidance
+  - description: Define prediction as transparent, probabilistic revision guidance rather than certainty about future examination content.
+  - decision:
+    - Prediction must never be represented as certainty.
+    - Prediction helps determine likely areas to prioritise, revision importance, historical patterns, and study allocation.
+    - Uncertainty must be communicated appropriately.
+    - Historical frequencies/probabilities must come from verified data.
+    - Demo values must never be presented as real KCSE statistics.
+  - rationale: Students under exam pressure are vulnerable to false certainty; honest probabilistic framing protects trust and supports better revision decisions.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-011: Student Intelligence Requires Accumulated Evidence
+  - title: Student Intelligence Requires Accumulated Evidence
+  - description: Require student mastery and weakness judgements to be based on accumulated evidence over time, not single answers.
+  - decision:
+    - A student’s ability must not be defined from one mistake or isolated response.
+    - The student model should eventually accumulate evidence such as subject, topic, subtopic, question type, attempts, correctness, time, hint usage, error type, confidence, timestamps, and repeated performance.
+    - Exact schema and algorithms may evolve; the accumulated-evidence principle is locked.
+  - rationale: Single-item judgements are noisy and can demoralise or mislead; evidence over time supports fairer diagnosis and better prioritisation.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-012: AI Explains and Coaches; Deterministic Systems Remain Authoritative
+  - title: AI Explains and Coaches; Deterministic Systems Remain Authoritative
+  - description: Separate AI coaching responsibilities from authoritative deterministic calculations.
+  - decision:
+    - AI may explain, tutor, contextualise, supply real-life examples, coach, and personalise guidance.
+    - Deterministic systems remain authoritative for scoring, calculations, curriculum mapping, performance calculations, prediction calculations, and revision-priority calculations.
+    - AI must not fabricate mastery scores, curriculum facts, historical statistics, prediction probabilities, sources, or student performance evidence.
+  - rationale: Deterministic authority preserves auditability and prevents fabricated educational metrics; AI remains valuable for explanation and coaching without becoming the source of truth for scores or statistics.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
+
+- DEC-013: Offline-First Core with Online AI Enhancement
+  - title: Offline-First Core with Online AI Enhancement
+  - description: Keep core educational functionality useful offline where practical, while allowing online connectivity to enhance AI and sync capabilities.
+  - decision:
+    - Core educational experience should remain useful offline where technically practical.
+    - Online connectivity should enhance AI tutoring, synchronisation, remote content, and cloud services.
+    - Architecture should avoid making basic learning functionality unnecessarily dependent on constant internet connectivity.
+  - rationale: Kenyan secondary students often face intermittent or expensive connectivity; offline-useful core learning protects educational value under real device and network constraints.
+  - status: LOCKED
+  - author: project lead / memory gate
+  - date: 2026-09-03
+  - references: KIFAA-SC/PROJECT_MEMORY.md; multi-AI research and reconciliation workflow accepted by project lead
