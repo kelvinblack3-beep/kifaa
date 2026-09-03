@@ -1,0 +1,11 @@
+{
+  "name": "@kifaa/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "build": "echo 'build step not required for MVP'",
+    "test": "node tests/test-scoring.js"
+  }
+}

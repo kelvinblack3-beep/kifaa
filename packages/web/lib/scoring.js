@@ -1,0 +1,38 @@
+// Simple deterministic scoring and priority functions used by both browser and tests
+export function scoreAnswer(question, answer){
+  const correct = (String(answer||'').trim().toLowerCase() === String(question.correct_answer||'').trim().toLowerCase());
+  const marks = correct ? (question.marks || 1) : 0;
+  return {correct, marks};
+}
+
+export function aggregateAttempts(attempts, questions){
+  // attempts: [{question_id, correct, marks}]
+  const byTopic = {};
+  for(const a of attempts){
+    const q = questions.find(x=>x.id===a.question_id);
+    if(!q) continue;
+    const topic = q.topic || 'unknown';
+    if(!byTopic[topic]) byTopic[topic]={correct:0,totalMarks:0,maxMarks:0,attempts:0};
+    byTopic[topic].attempts++;
+    byTopic[topic].correct += a.correct ? 1:0;
+    byTopic[topic].totalMarks += a.marks;
+    byTopic[topic].maxMarks += q.marks || 1;
+  }
+  const stats = {};
+  for(const t of Object.keys(byTopic)){
+    const b = byTopic[t];
+    stats[t] = {
+      attempts: b.attempts,
+      accuracy: b.attempts ? Math.round(100*(b.correct/b.attempts)) : 0,
+      mastery: b.maxMarks ? +( (b.totalMarks / b.maxMarks)*100 ).toFixed(1) : 0
+    };
+  }
+  return stats;
+}
+
+export function computePriority(topicStat, historicalFrequency){
+  // Simple transparent formula: priority = (1 - mastery%) * historicalFrequency
+  // historicalFrequency is 0..1
+  const weakness = 1 - ((topicStat.mastery||0)/100);
+  return +(weakness * (historicalFrequency||0)).toFixed(3);
+}

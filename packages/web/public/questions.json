@@ -1,0 +1,7 @@
+[
+  { "id": "m-q-1", "subject": "Mathematics", "topic": "Quadratic equations", "prompt": "Solve for x: x^2 - 5x + 6 = 0", "correct_answer": "2,3", "marks": 4, "historical_frequency": 0.78 },
+  { "id": "m-q-2", "subject": "Mathematics", "topic": "Trigonometry", "prompt": "What is sin(30°)?", "correct_answer": "0.5", "marks": 2, "historical_frequency": 0.45 },
+  { "id": "m-q-3", "subject": "Mathematics", "topic": "Statistics", "prompt": "What is the median of [1,2,3]?", "correct_answer": "2", "marks": 1, "historical_frequency": 0.22 },
+  { "id": "m-q-4", "subject": "Mathematics", "topic": "Quadratic equations", "prompt": "Find the discriminant of x^2 + 4x + 4", "correct_answer": "0", "marks": 2, "historical_frequency": 0.5 },
+  { "id": "m-q-5", "subject": "Mathematics", "topic": "Algebra", "prompt": "Simplify: 2(x+3)-x", "correct_answer": "x+6", "marks": 1, "historical_frequency": 0.3 }
+]

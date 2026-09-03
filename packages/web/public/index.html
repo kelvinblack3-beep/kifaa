@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SHARP BOYZ — Mobile MVP</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <header><h1>SHARP BOYZ</h1><p>Study smarter. Know where you stand.</p></header>
+    <main>
+      <div id="landing" class="screen">
+        <button id="start-setup">Get started</button>
+      </div>
+
+      <div id="setup" class="screen hidden">
+        <h2>Student setup</h2>
+        <label>Full name<input id="student-name" type="text" /></label>
+        <label>Class/Level<select id="student-level"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
+        <label>Subject<select id="student-subject"><option>Mathematics</option></select></label>
+        <button id="start-diagnostic">Start diagnostic</button>
+      </div>
+
+      <div id="diagnostic" class="screen hidden">
+        <h2>Diagnostic</h2>
+        <div id="question-area"></div>
+        <div id="diag-controls"><button id="diag-next">Next</button></div>
+      </div>
+
+      <div id="results" class="screen hidden">
+        <h2>Results</h2>
+        <div id="score-summary"></div>
+        <div id="weaknesses"></div>
+        <button id="to-practice">Practice</button>
+      </div>
+
+      <div id="practice" class="screen hidden">
+        <h2>Practice</h2>
+        <div id="practice-area"></div>
+        <button id="practice-next">Next Practice</button>
+      </div>
+
+    </main>
+    <footer><small>Demo data only. Predictions are trend-based estimates, not guarantees.</small></footer>
+  </div>
+  <script src="/scoring.js"></script>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+body{font-family:system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;margin:0;padding:0;background:#f7f8fb;color:#111}
+header{background:#0b6efd;color:white;padding:1rem}
+header h1{margin:0;font-size:1.2rem}
+main{padding:1rem}
+.screen{max-width:720px;margin:0 auto}
+.hidden{display:none}
+label{display:block;margin:0.6rem 0}
+button{background:#0b6efd;border:none;color:white;padding:0.6rem 1rem;border-radius:6px}
+#question-area, #practice-area{background:white;padding:1rem;border-radius:8px;margin:1rem 0}
