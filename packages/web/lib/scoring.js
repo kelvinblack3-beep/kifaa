@@ -1,6 +1,29 @@
 // Simple deterministic scoring and priority functions used by both browser and tests
+
+/**
+ * Normalize a numeric comma-separated answer for comparison.
+ * Handles whitespace and, for unordered sets, treats equivalent orderings as equal.
+ * @param {string} answer - The answer to normalize
+ * @returns {string} - Normalized answer
+ */
+function normalizeAnswer(answer) {
+  const str = String(answer || '').trim();
+  
+  // Check if it's a comma-separated list of numbers
+  const parts = str.split(',').map(p => p.trim()).filter(p => p.length > 0);
+  
+  if (parts.length > 1 && parts.every(p => /^-?\d+\.?\d*$/.test(p))) {
+    // It's a numeric list; sort to normalize order
+    const nums = parts.map(p => parseFloat(p)).sort((a, b) => a - b);
+    return nums.join(',');
+  }
+  
+  // Not a numeric list; return lowercased trimmed version
+  return str.toLowerCase();
+}
+
 export function scoreAnswer(question, answer){
-  const correct = (String(answer||'').trim().toLowerCase() === String(question.correct_answer||'').trim().toLowerCase());
+  const correct = (normalizeAnswer(String(answer||'')) === normalizeAnswer(String(question.correct_answer||'')));
   const marks = correct ? (question.marks || 1) : 0;
   return {correct, marks};
 }
