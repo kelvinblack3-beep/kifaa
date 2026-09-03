@@ -1,4 +1,3 @@
-// Simple static file server for development (no external deps)
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -21,8 +20,9 @@ const server = http.createServer((req,res)=>{
   const fpath = path.join(PUBLIC, url);
   fs.stat(fpath, (err, stat)=>{
     if(err){ res.statusCode = 404; res.end('Not found'); return; }
-    fs.createReadStream(fpath).pipe(res);
     res.setHeader('Content-Type', mime(fpath));
+    const stream = fs.createReadStream(fpath);
+    stream.pipe(res);
   });
 });
 

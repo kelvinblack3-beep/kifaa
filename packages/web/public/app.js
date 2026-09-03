@@ -5,8 +5,8 @@ const QUESTIONS_URL = '/questions.json';
 let questions = [];
 let state = {student:{}, attempts:[], diagIndex:0, practiceIndex:0};
 
-function saveState(){ localStorage.setItem('sharpboyz_state', JSON.stringify(state)); }
-function loadState(){ const s = localStorage.getItem('sharpboyz_state'); if(s) state = JSON.parse(s); }
+function saveState(){ try{ localStorage.setItem('sharpboyz_state', JSON.stringify(state)); }catch(e){ console.warn('Failed to save state', e); }}
+function loadState(){ try{ const s = localStorage.getItem('sharpboyz_state'); if(s){ state = JSON.parse(s); if(!state.attempts) state.attempts = []; } } catch(e){ console.warn('Failed to load state, resetting', e); state = {student:{}, attempts:[], diagIndex:0, practiceIndex:0}; localStorage.removeItem('sharpboyz_state'); } }
 
 async function loadQuestions(){ const res = await fetch(QUESTIONS_URL); questions = await res.json(); }
 
@@ -67,7 +67,7 @@ function renderResults(){
     const qSample = questions.find(x=>x.topic===t);
     const hist = qSample ? (qSample.historical_frequency||0) : 0;
     const pr = computePriority(stats[t], hist);
-    return `<div class="topic"><h4>${t}</h4><p>Accuracy: ${stats[t].accuracy}%, Mastery: ${stats[t].mastery}%</p><p>Historical likelihood: ${Math.round((hist||0)*100)}%</p><p>Priority score: ${pr}</p></div>`;
+    return `<div class="topic"><h4>${t}</h4><p>Accuracy: ${stats[t].accuracy}%, Mastery: ${stats[t].mastery}%</p><p>Historical likelihood: ${Math.round((hist||0)*100)}% <em>(DEMO/historical baseline)</em></p><p>Priority score: ${pr}</p></div>`;
   }).join('');
   weaknesses.innerHTML = rows;
 }
