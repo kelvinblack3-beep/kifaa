@@ -12,9 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Use packageManager from root package.json (pnpm@9.15.0).
+      # Do not set version here — pnpm/action-setup@v4 errors on mismatch.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
@@ -22,16 +22,22 @@ jobs:
           cache: "pnpm"
 
       - name: Install
-        run: pnpm install --frozen-lockfile || pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm typecheck || true
+        run: pnpm typecheck
 
       - name: Ledger tests
-        run: pnpm --filter @kifaa/ledger test || true
+        run: pnpm --filter @kifaa/ledger test
 
       - name: Transaction tests
-        run: pnpm --filter @kifaa/transactions test || true
+        run: pnpm --filter @kifaa/transactions test
+
+      - name: Web tests
+        run: pnpm --filter @kifaa/web test
 
       - name: Build packages
-        run: pnpm --filter @kifaa/shared --filter @kifaa/ledger build || true
+        run: pnpm --filter @kifaa/shared --filter @kifaa/ledger build
+
+      - name: Web build
+        run: pnpm --filter @kifaa/web build
